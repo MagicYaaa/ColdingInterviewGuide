@@ -3,7 +3,12 @@ package Chapter5_String;
 import com.sun.org.apache.bcel.internal.generic.SWAP;
 
 import javax.naming.RefAddr;
+import javax.xml.soap.Node;
 import javax.xml.stream.FactoryConfigurationError;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.Stack;
+import java.util.prefs.NodeChangeEvent;
 
 /**
  * @program: ColdingInterviewGuide
@@ -398,25 +403,295 @@ public class StringSolution {
         reverse(chas, size, chas.length - 1);
         reverse(chas, 0, chas.length - 1);
     }
+
     //补充题目的 递归交换
+    public void rotate2(char[] chas, int size) {
+        if (chas == null || size <= 0 || size >= chas.length) {
+            return;
+        }
+        int start = 0;
+        int end = chas.length - 1;
+        int lpart = size;
+        int rpart = chas.length - 1;
+        int s = Math.min(lpart, rpart);
+        int d = lpart - rpart;
+        while (true) {
+            exchange(chas, start, end, s);
+            if (d == 0) {
+                break;
+            } else if (d > 0) {
+                start += s;
+                lpart = d;
+            } else {
+                end -= s;
+                rpart = -d;
+            }
+            s = Math.min(lpart, rpart);
+            d = lpart - rpart;
+        }
+    }
 
-
+    public void exchange(char[] chas, int start, int end, int size) {
+        int i = end - size + 1;
+        char tmp = 0;
+        while (size-- != 0) {
+            tmp = chas[start];
+            chas[start] = chas[i];
+            chas[i] = tmp;
+            start++;
+            i++;
+        }
+    }
 
 
     /*数组中两个字符串的最小距离*/
+    public int minDistance(String[] strs, String str1, String str2) {
+        if (str1 == null || str2 == null) {
+            return -1;
+        }
+        if (str1.equals(str2)) {
+            return 0;
+        }
+        int last1 = -1;
+        int last2 = -1;
+        int min = Integer.MAX_VALUE;
+        for (int i = 0; i != strs.length; i++) {
+            if (strs[i].equals(str1)) {
+                min = Math.min(min, last2 == -1 ? min : i - last2);
+                last1 = i;
+            }
+            if (strs[i].equals(str2)) {
+                min = Math.min(min, last1 == -1 ? min : i - last1);
+                last2 = i;
+            }
+        }
+        return min == Integer.MAX_VALUE ? -1 : min;
+    }
 
-    /*添加最少字符使字符串整体都是会问字符串*/
+
+
+
+    /*添加最少字符使字符串整体都是回文字符串*/
+
 
     /*括号字符串的有效性和最长有效长度*/
+    public boolean isValid(String str) {
+        if (str == null || str.equals("")) {
+            return false;
+        }
+        char[] chas = str.toCharArray();
+        int status = 0;
+        for (int i = 0; i < chas.length; i++) {
+            if (chas[i] != ')' && chas[i] != '(') {
+                return false;
+            }
+            if (chas[i] == ')' && --status < 0) {
+                return false;
+            }
+            if (chas[i] == '(') {
+                status++;
+            }
+        }
+        return status == 0;
+    }
+
+    //补充题目  括号串 求最大有效长度  动态优化求解
+    public int maxLength(String str) {
+        if (str == null || str.length() == 0) {
+            return 0;
+        }
+        char[] chas = str.toCharArray();
+        int[] dp = new int[chas.length];
+        int pre = 0;
+        int res = 0;
+        for (int i = 1; i < chas.length; i++) {
+            if (chas[i] == ')') {
+                pre = i - dp[i - 1] - 1;
+                if (pre >= 0 && chas[pre] == '(') {
+                    dp[i] = dp[i - 1] + 2 + (pre > 0 ? dp[pre - 1] : 0);
+                }
+            }
+            res = Math.max(res, dp[i]);
+        }
+        return res;
+    }
+
 
     /*公式字符串求值*/
+    //~~~~~~~TODO~~~~~~~~
+    public int getValue(String exp) {
+        return value(exp.toCharArray(), 0)[0];
+    }
+
+    public int[] value(char[] chars, int i) {
+        Deque<String> deq = new LinkedList<>();
+        int pre = 0;
+        int[] bra = null;
+        return new int[]{};
+    }
+
+    //判断是否 符号
+    public boolean isTag(String s) {
+        if (s.equals("*") || s.equals("+") ||
+                s.equals("-") || s.equals("/") ||
+                s.equals("(") || s.equals(")")) {
+            return true;
+        }
+        return false;
+    }
+
+    //获取栈
+    public Stack<String> getStack(String exp) {
+        Stack<String> stack = new Stack<>();
+        int num = 0;
+        for (int i = 0; i < exp.length(); i++) {
+
+            if (exp.charAt(i) - '0' >= 0 && exp.charAt(i) - '0' <= 9) {
+                num += num * 10 + (exp.charAt(i) - '0');
+                continue;
+            }
+            if (num != 0) {
+                stack.push(num + "");
+                num = 0;
+            } else {
+                stack.push(exp.charAt(i) + "");
+            }
+        }
+        return stack;
+    }
+
 
     /*0左边必有1的二进制字符串数量*/
+    //1.暴力递归
+    public int getNum1(int n) {
+        if (n < 1) {
+            return 0;
+        }
+        return process(1, n);
+    }
 
-    /*。。。。。。*/
+    public int process(int i, int n) {
+        if (i == n - 1) {
+            return 2;
+        }
+        if (i == n) {
+            return 1;
+        }
+        return process(i + 1, n) + process(i + 2, n);
+    }
+
+    //2.类斐波那契数列求法
+    public int getNum2(int n) {
+        if (n < 1) {
+            return 0;
+        }
+        if (n == 1) {
+            return 1;
+        }
+        int pre = 1;
+        int cur = 1;
+        int tmp = 0;
+        for (int i = 2; i < n + 1; i++) {
+            tmp = cur;
+            cur += pre;
+            pre = tmp;
+        }
+        return cur;
+    }
+    //2.2 矩阵求法
+
+    /*。。。。。。*/ //TODO
 
     /*字符串匹配*/
 
-    /*字典树 前缀树的实现*/
 
+    /*字典树 前缀树的实现*/
+    public class Tire {
+        private TrieNode root;
+
+        public Tire() {
+            root = new TrieNode();
+        }
+
+        public void insert(String word) {
+            if (word == null) {
+                return;
+            }
+            char[] chs = word.toCharArray();
+            TrieNode node = root;
+            int index = 0;
+            for (int i = 0; i < chs.length; i++) {
+                index = chs[i] - 'a';
+                if (node.map[index] == null) {
+                    node.map[index] = new TrieNode();
+                }
+                node = node.map[index];
+                node.path++;
+            }
+            node.end++;
+        }
+
+        public void delete(String word) {
+            if (search(word)) {
+                char[] chs = word.toCharArray();
+                TrieNode node = root;
+                int index = 0;
+                for (int i = 0; i < chs.length; i++) {
+                    index = chs[i] - 'a';
+                    if (node.map[index].path-- == 1) {
+                        node.map[index] = null;
+                    }
+                    node = node.map[index];
+                }
+            }
+        }
+
+        public boolean search(String word) {
+            if (word == null) {
+                return false;
+            }
+            char[] chs = word.toCharArray();
+            TrieNode node = root;
+            int index = 0;
+            for (int i = 0; i < chs.length; i++) {
+                index = chs[i] - 'a';
+                if (node.map[index] == null) {
+                    return false;
+                }
+                node = node.map[index];
+            }
+            return node.end != 0;
+        }
+
+        public int prefixNumber(String pre) {
+            if (pre == null) {
+                return 0;
+            }
+            char[] chs = pre.toCharArray();
+            TrieNode node = root;
+            int index = 0;
+            for (int i = 0; i < chs.length; i++) {
+                index = chs[i] - 'a';
+                if (node.map[index] == null) {
+                    return 0;
+                }
+                node = node.map[index];
+            }
+            return node.path;
+        }
+    }
+
+}
+
+//字典树结构
+class TrieNode {
+    public int path;
+    public int end;
+    public TrieNode[] map;
+
+    public TrieNode() {
+        path = 0;
+        end = 0;
+        map = new TrieNode[26];
+    }
 }
